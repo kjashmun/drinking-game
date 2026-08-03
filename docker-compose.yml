@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      target: development
+    container_name: drinking-game-app
+    ports:
+      - "3000:3000"  # Frontend (Vite)
+      - "3001:3001"  # Backend (Express + Socket.io)
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=3001
+      - CORS_ORIGIN=*
+    volumes:
+      # Mount source code for hot reload
+      - ./client/src:/app/client/src:ro
+      - ./server/src:/app/server/src:ro
+      # Preserve node_modules in container
+      - /app/client/node_modules
+      - /app/server/node_modules
+      - /app/node_modules
+    networks:
+      - party-game-network
+    restart: unless-stopped
+    # Security enhancements
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    read_only: false  # Set to true in production with proper tmp mounts
+    tmpfs:
+      - /tmp:mode=1777,size=100M
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+
+networks:
+  party-game-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
