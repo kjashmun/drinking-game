@@ -3,9 +3,17 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import type { 
+  ServerToClientEvents, 
+  ClientToServerEvents, 
+  InterServerEvents, 
+  SocketData 
+} from './types/socket.js';
 
 // Load environment variables
 dotenv.config();
+
+const isDev = process.env.NODE_ENV !== 'production';
 
 const app = express();
 const httpServer = createServer(app);
@@ -20,27 +28,74 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Socket.io configuration
-const io = new Server(httpServer, {
+// Socket.io configuration with TypeScript types
+const io = new Server<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  InterServerEvents,
+  SocketData
+>(httpServer, {
   cors: corsOptions,
 });
 
+// Track connected clients
+let connectedClients = 0;
+
 // Basic health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    connectedClients,
+    uptime: process.uptime(),
+  });
 });
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
-  console.log(`✓ Client connected: ${socket.id}`);
+  connectedClients++;
+  
+  if (isDev) {
+    console.log(`✓ Client connected: ${socket.id}`);
+    console.log(`  Total clients: ${connectedClients}`);
+    console.log(`  Transport: ${socket.conn.transport.name}`);
+  }
 
-  socket.on('disconnect', () => {
-    console.log(`✗ Client disconnected: ${socket.id}`);
+  // Broadcast updated client count to all clients
+  io.emit('connectionStatus', { 
+    connected: true, 
+    clientCount: connectedClients 
   });
 
-  // Ping/pong test for Story 1.2
+  socket.on('disconnect', (reason) => {
+    connectedClients--;
+    
+    if (isDev) {
+      console.log(`✗ Client disconnected: ${socket.id}`);
+      console.log(`  Reason: ${reason}`);
+      console.log(`  Total clients: ${connectedClients}`);
+    }
+
+    // Broadcast updated client count to all clients
+    io.emit('connectionStatus', { 
+      connected: true, 
+      clientCount: connectedClients 
+    });
+  });
+
+  // Ping/pong test for latency measurement
   socket.on('ping', () => {
     socket.emit('pong', { timestamp: Date.now() });
+    
+    if (isDev) {
+      console.log(`⟳ Ping received from ${socket.id}`);
+    }
+  });
+
+  // Error handling
+  socket.on('error', (error) => {
+    console.error(`✗ Socket error for ${socket.id}:`, error);
+    socket.emit('error', { message: 'An error occurred' });
   });
 });
 
@@ -57,6 +112,8 @@ httpServer.listen(PORT, HOST, () => {
 ║  Port: ${PORT}                                            ║
 ║  Host: ${HOST}                                      ║
 ║  Environment: ${process.env.NODE_ENV || 'development'}                              ║
+║  WebSocket: Enabled                                    ║
+║  Debug Logging: ${isDev ? 'ON' : 'OFF'}                                   ║
 ╚════════════════════════════════════════════════════════╝
   `);
 });

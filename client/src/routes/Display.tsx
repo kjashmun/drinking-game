@@ -1,7 +1,38 @@
+import { useSocket } from '../hooks/useSocket'
+import { useState, useEffect } from 'react'
+
 export default function Display() {
+  const { isConnected, socket } = useSocket()
+  const [clientCount, setClientCount] = useState(0)
+
+  useEffect(() => {
+    const handleConnectionStatus = (data: { connected: boolean; clientCount: number }) => {
+      setClientCount(data.clientCount)
+    }
+
+    socket.on('connectionStatus', handleConnectionStatus)
+
+    return () => {
+      socket.off('connectionStatus', handleConnectionStatus)
+    }
+  }, [socket])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex flex-col items-center justify-center p-8">
-      <div className="max-w-6xl w-full">
+      {/* Connection Status Bar */}
+      <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-black/30 backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+          <span className="text-white text-sm font-medium">
+            {isConnected ? 'Connected' : 'Disconnected'}
+          </span>
+        </div>
+        <div className="text-white text-sm">
+          <span className="text-purple-300">Connected Clients:</span> <span className="font-bold">{clientCount}</span>
+        </div>
+      </div>
+
+      <div className="max-w-6xl w-full mt-16">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-7xl font-bold text-white mb-4">

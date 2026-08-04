@@ -19,13 +19,15 @@ Each story follows this structure:
 **So that** I can develop and test locally with multiple devices
 
 **Acceptance Criteria:**
-- [ ] React + Vite frontend scaffolded in `/client` directory
-- [ ] Node.js + Express backend scaffolded in `/server` directory
-- [ ] Docker and docker-compose configuration files created
-- [ ] Single container runs both frontend and backend
-- [ ] App accessible from phones on same WiFi network via local IP
-- [ ] README includes instructions for finding local IP and accessing from phones
-- [ ] Ports 3000 (frontend) and 3001 (backend WebSocket) exposed
+- [x] React + Vite frontend scaffolded in `/client` directory
+- [x] Node.js + Express backend scaffolded in `/server` directory
+- [x] Docker and docker-compose configuration files created
+- [x] Single container runs both frontend and backend
+- [x] App accessible from phones on same WiFi network via local IP
+- [x] README includes instructions for finding local IP and accessing from phones
+- [x] Ports 3000 (frontend) and 3001 (backend WebSocket) exposed
+
+**Status:** ✅ COMPLETE (Tested on laptop + 2 phones)
 
 **Technical Notes:**
 - Use `node:18-alpine` base image
@@ -43,12 +45,14 @@ Each story follows this structure:
 **So that** game state can sync instantly across all devices
 
 **Acceptance Criteria:**
-- [ ] Socket.io installed and configured on server
-- [ ] Socket.io-client installed and configured on frontend
-- [ ] Client successfully connects to server via WebSocket
-- [ ] Connection uses local IP address (not localhost) when accessed from phones
-- [ ] Connection/disconnection events logged on both client and server
-- [ ] Basic ping/pong test working to verify real-time communication
+- [x] Socket.io installed and configured on server
+- [x] Socket.io-client installed and configured on frontend
+- [ ] Client successfully connects to server via WebSocket (READY TO TEST)
+- [ ] Connection uses local IP address (not localhost) when accessed from phones (READY TO TEST)
+- [ ] Connection/disconnection events logged on both client and server (READY TO TEST)
+- [ ] Basic ping/pong test working to verify real-time communication (READY TO TEST)
+
+**Status:** ✅ IMPLEMENTED - Ready for Testing (See STORY_1.2_TESTING.md)
 
 **Technical Notes:**
 - Server should use room-based channels for lobby isolation
